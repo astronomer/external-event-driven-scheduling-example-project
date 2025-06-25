@@ -1,45 +1,36 @@
-Overview
-========
+# Event-driven scheduling of Airflow DAGs with Apache Kafka
 
-Welcome to Astronomer! This project was generated after you ran 'astro dev init' using the Astronomer CLI. This readme describes the contents of the project, as well as how to run Apache Airflow on your local machine.
+This project demonstrates [event-driven scheduling](https://www.astronomer.io/docs/learn/airflow-event-driven-scheduling/) using Apache Kafka and Apache Airflow.
 
-Project Contents
-================
+This project works out of the box when using the [Astro CLI](https://www.astronomer.io/docs/astro/cli/install-cli) spinning up a full local Airflow environment with an additional local Kafka container. 
 
-Your Astro project contains the following files and folders:
+## Project Structure
 
-- dags: This folder contains the Python files for your Airflow DAGs. By default, this directory includes one example DAG:
-    - `example_astronauts`: This DAG shows a simple ETL pipeline example that queries the list of astronauts currently in space from the Open Notify API and prints a statement for each astronaut. The DAG uses the TaskFlow API to define tasks in Python, and dynamic task mapping to dynamically print a statement for each astronaut. For more on how this DAG works, see our [Getting started tutorial](https://www.astronomer.io/docs/learn/get-started-with-airflow).
-- Dockerfile: This file contains a versioned Astro Runtime Docker image that provides a differentiated Airflow experience. If you want to execute other commands or overrides at runtime, specify them here.
-- include: This folder contains any additional files that you want to include as part of your project. It is empty by default.
-- packages.txt: Install OS-level packages needed for your project by adding them to this file. It is empty by default.
-- requirements.txt: Install Python packages needed for your project by adding them to this file. It is empty by default.
-- plugins: Add custom or community plugins for your project to this file. It is empty by default.
-- airflow_settings.yaml: Use this local-only file to specify Airflow Connections, Variables, and Pools instead of entering them in the Airflow UI as you develop DAGs in this project.
+```text
+├── dags/
+│   ├── event_driven_dag.py    # Event-driven DAG that runs as soon as a message appears in a Kafka topic
+│   └── producer_dag.py        # Producer DAG that sends messages to Kafka
+├── tests/
+│   └── dags/
+│       └── test_dag_example.py # example DAG tests
+├── docker-compose.override.yml # Kafka container configuration
+├── Dockerfile                 # Astro CLI image
+└── requirements.txt          # Python dependencies (provider packages)
+```
 
-Deploy Your Project Locally
-===========================
 
-Start Airflow on your local machine by running 'astro dev start'.
+## Local Development Setup
 
-This command will spin up five Docker containers on your machine, each for a different Airflow component:
+1. Fork this repository and clone it to your local machine.
 
-- Postgres: Airflow's Metadata Database
-- Scheduler: The Airflow component responsible for monitoring and triggering tasks
-- DAG Processor: The Airflow component responsible for parsing DAGs
-- API Server: The Airflow component responsible for serving the Airflow UI and API
-- Triggerer: The Airflow component responsible for triggering deferred tasks
+2. Make sure you have the [Astro CLI](https://www.astronomer.io/docs/astro/cli/install-cli) installed and are at least on version 1.34.0 (check with `astro version`) to run Airflow 3 projects.
 
-When all five containers are ready the command will open the browser to the Airflow UI at http://localhost:8080/. You should also be able to access your Postgres Database at 'localhost:5432/postgres' with username 'postgres' and password 'postgres'.
+3. Create a `.env` file in the root of your project and copy the contents from `.env_example` to it. This environment variable defines the connection between Kafka and Airflow.
 
-Note: If you already have either of the above ports allocated, you can either [stop your existing Docker containers or change the port](https://www.astronomer.io/docs/astro/cli/troubleshoot-locally#ports-are-not-available-for-my-local-airflow-webserver).
+4. Start the project by running `astro dev start`. Note that it takes a bit longer for Kafka to start up even after Airflow is ready.
 
-Deploy Your Project to Astronomer
-=================================
+5. Unpause the `event_driven_dag` to have it start listening for messages
 
-If you have an Astronomer account, pushing code to a Deployment on Astronomer is simple. For deploying instructions, refer to Astronomer documentation: https://www.astronomer.io/docs/astro/deploy-code/
+6. Manually trigger the `producer_dag` to send test messages to the Kafka topic
 
-Contact
-=======
-
-The Astronomer CLI is maintained with love by the Astronomer team. To report a bug or suggest a change, reach out to our support.
+7. See the `event_driven_dag` run and print the message to the logs.
